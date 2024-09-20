@@ -36,16 +36,16 @@ module.exports = async function (fastify, opts) {
     // if later need to refresh the token this can be used
     // const { token: newToken } = await this.getNewAccessTokenUsingRefreshToken(token)
 
-    reply.send({ token })
+    reply.setCookie('access_token', token.access_token).setCookie('id_token', token.id_token).send({ token })
   })
 
   fastify.get('/auth/logout', async function (request, reply) {
-    const {id_token} = request.query
+    const id_token = request.cookies.id_token
 
     const response = await axios.get(
         `http://localhost:10222/realms/jcbc-test/protocol/openid-connect/logout?id_token_hint=${encodeURIComponent(id_token)}&post_logout_redirect_uri=${encodeURIComponent('http://localhost:3000')}`)
 
-    reply.send({status: response.status})
+    reply.clearCookie('id_token').clearCookie('access_token').send({status: response.status})
   })
 
   fastify.get('/', async function (request, reply) {
