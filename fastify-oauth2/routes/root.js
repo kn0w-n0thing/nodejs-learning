@@ -1,15 +1,19 @@
 'use strict'
 
+const axios = require('axios')
+
 const oauthPlugin = require('@fastify/oauth2')
 
 module.exports = async function (fastify, opts) {
+  const clientId = 'gateway'
+  const clientSecret = 'rXtmKOshTzEvHIQnAsoX8r9VL0ZMlaKN'
   fastify.register(oauthPlugin, {
     name: 'keycloak',
     scope: ['openid', 'profile', 'email'],
     credentials: {
       client: {
-        id: 'gateway',
-        secret: 'rXtmKOshTzEvHIQnAsoX8r9VL0ZMlaKN'
+        id: clientId,
+        secret: clientSecret
       },
       auth: {
         authorizeHost: 'http://localhost:10222',
@@ -28,12 +32,20 @@ module.exports = async function (fastify, opts) {
 
   fastify.get('/auth/callback', async function (request, reply) {
     const { token } = await this.keycloak.getAccessTokenFromAuthorizationCodeFlow(request)
-    console.log(`token: ${token}`)
 
     // if later need to refresh the token this can be used
     // const { token: newToken } = await this.getNewAccessTokenUsingRefreshToken(token)
 
-    reply.send({ token: token })
+    reply.send({ token })
+  })
+
+  fastify.get('/auth/logout', async function (request, reply) {
+    const {id_token} = request.query
+
+    const response = await axios.get(
+        `http://localhost:10222/realms/jcbc-test/protocol/openid-connect/logout?id_token_hint=${encodeURIComponent(id_token)}&post_logout_redirect_uri=${encodeURIComponent('http://localhost:3000')}`)
+
+    reply.send({status: response.status})
   })
 
   fastify.get('/', async function (request, reply) {
