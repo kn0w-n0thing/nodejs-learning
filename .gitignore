@@ -5,7 +5,7 @@ node_modules
 
 # package lock
 package-lock.yaml
-
+package-lock.json
 
 # dotenv files
 .env
